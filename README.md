@@ -1,6 +1,6 @@
 # ARC CLOUD CLI
 
-[![CI Tests](https://github.com/ARC-CLOUD/arc-cloud-cli/actions/workflows/tests.yml/badge.svg)](https://github.com/ARC-CLOUD/arc-cloud-cli/actions/workflows/tests.yml)
+[![CI Tests](https://github.com/arc-cloud-innovations/arc-cloud-cli/actions/workflows/tests.yml/badge.svg)](https://github.com/arc-cloud-innovations/arc-cloud-cli/actions/workflows/tests.yml)
 [![PyPI version](https://img.shields.io/pypi/v/arc-cloud.svg)](https://pypi.org/project/arc-cloud/)
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -38,7 +38,7 @@ pip install arc-cloud
 
 ### Development Installation
 ```bash
-git clone https://github.com/ARC-CLOUD/arc-cloud-cli.git
+git clone https://github.com/arc-cloud-innovations/arc-cloud-cli.git
 cd arc-cloud-cli
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate

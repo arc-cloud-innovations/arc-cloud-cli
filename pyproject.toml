@@ -53,10 +53,10 @@ dev = [
 arc = "arc_cloud.main:app"
 
 [project.urls]
-Homepage = "https://github.com/ARC-CLOUD/arc-cloud-cli"
-Documentation = "https://github.com/ARC-CLOUD/arc-cloud-cli#readme"
-Repository = "https://github.com/ARC-CLOUD/arc-cloud-cli"
-Issues = "https://github.com/ARC-CLOUD/arc-cloud-cli/issues"
+Homepage = "https://github.com/arc-cloud-innovations/arc-cloud-cli"
+Documentation = "https://github.com/arc-cloud-innovations/arc-cloud-cli#readme"
+Repository = "https://github.com/arc-cloud-innovations/arc-cloud-cli"
+Issues = "https://github.com/arc-cloud-innovations/arc-cloud-cli/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["arc_cloud"]

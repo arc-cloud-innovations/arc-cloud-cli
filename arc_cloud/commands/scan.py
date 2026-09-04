@@ -53,11 +53,11 @@ def scan_command(
 
     # Pre-flight path validations
     if not target_path.exists():
-        err_console.print(f"[bold red]Error:[/bold red] Project path does not exist: '{target_path}'")
+        err_console.print(f"[bold red]✗ Error:[/bold red] Project path does not exist: '{target_path}'")
         raise typer.Exit(code=1)
 
     if not target_path.is_dir():
-        err_console.print(f"[bold red]Error:[/bold red] Project path is not a directory: '{target_path}'")
+        err_console.print(f"[bold red]✗ Error:[/bold red] Project path is not a directory: '{target_path}'")
         raise typer.Exit(code=1)
 
     engine = ScannerEngine(max_files=max_files, max_depth=max_depth)
@@ -65,10 +65,10 @@ def scan_command(
     try:
         blueprint = engine.scan(target_path)
     except PermissionError as exc:
-        err_console.print(f"[bold red]Permission Error:[/bold red] Unable to read project directory: {exc}")
+        err_console.print(f"[bold red]✗ Permission Error:[/bold red] Unable to read project directory: {exc}")
         raise typer.Exit(code=1)
     except Exception as exc:
-        err_console.print(f"[bold red]Scan Failed:[/bold red] An unexpected error occurred: {exc}")
+        err_console.print(f"[bold red]✗ Scan Failed:[/bold red] An unexpected error occurred: {exc}")
         raise typer.Exit(code=1)
 
     # Save to file if requested
@@ -78,7 +78,7 @@ def scan_command(
             if not json_output:
                 console.print(f"[bold green]✓[/bold green] Blueprint written to [cyan]{output_file}[/cyan]\n")
         except Exception as exc:
-            err_console.print(f"[bold red]Error saving blueprint:[/bold red] {exc}")
+            err_console.print(f"[bold red]✗ Error saving blueprint:[/bold red] {exc}")
             raise typer.Exit(code=1)
 
     # Handle raw JSON output
