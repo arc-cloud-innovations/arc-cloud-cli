@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from arc_cloud.core.config import ArcConfig
-from arc_cloud.core.models import Finding, FindingCategory, ProjectProfile
+from arc_cloud.core.models import EngineStatus, Finding, FindingCategory, ProjectProfile
 from arc_cloud.engines.base import BaseEngine, EngineResult
 from arc_cloud.parsers.manager import ParserManager
 from arc_cloud.rules.base import RuleContext
@@ -76,11 +76,23 @@ class CodeQualityEngine(BaseEngine):
                 rule_findings = rule.evaluate(context)
                 findings.extend(rule_findings)
 
+        score = 100.0
+        for f in findings:
+            if f.severity.value == "critical":
+                score -= 20.0
+            elif f.severity.value == "high":
+                score -= 10.0
+            elif f.severity.value == "medium":
+                score -= 5.0
+            else:
+                score -= 2.0
+        score = max(0.0, score)
         elapsed_ms = (time.perf_counter() - start_time) * 1000.0
 
         return EngineResult(
             engine_name=self.name,
-            status="completed",
+            status=EngineStatus.ANALYZED,
+            score=score,
             findings=findings,
             metrics={
                 "files_analyzed": files_analyzed,

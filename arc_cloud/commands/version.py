@@ -39,11 +39,16 @@ def version_command() -> None:
     engines_table.add_column("Status", style="bold")
 
     engines = [
-        (CodeQualityEngine.name, "1.0.0", "[green]Active (Local AST)[/green]"),
-        (SecurityEngine.name, "0.1.0", "[dim]Planned (v0.2.0)[/dim]"),
-        (DependencyEngine.name, "0.1.0", "[dim]Planned (v0.2.0)[/dim]"),
-        (ArchitectureEngine.name, "0.1.0", "[dim]Planned (v0.3.0)[/dim]"),
-        (TechnicalDebtEngine.name, "0.1.0", "[dim]Planned (v0.3.0)[/dim]"),
+        ("code_quality", "1.0.0", "[green]Active (Local AST)[/green]"),
+        ("reliability", "1.0.0", "[green]Active (Static Analysis)[/green]"),
+        ("security", "1.0.0", "[green]Active (SAST Engine)[/green]"),
+        ("secrets", "1.0.0", "[green]Active (Entropy & Pattern)[/green]"),
+        ("dependencies", "1.0.0", "[green]Active (Manifest Engine)[/green]"),
+        ("architecture", "1.0.0", "[green]Active (Graph Analysis)[/green]"),
+        ("technical_debt", "1.0.0", "[green]Active (Remediation Estimator)[/green]"),
+        ("testing", "1.0.0", "[green]Active (Test Intelligence)[/green]"),
+        ("performance", "1.0.0", "[green]Active (Complexity Profiler)[/green]"),
+        ("ai_risk", "1.0.0", "[green]Active (Composite Risk)[/green]"),
     ]
 
     for name, ver, status in engines:

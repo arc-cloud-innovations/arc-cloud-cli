@@ -9,6 +9,7 @@ from arc_cloud.core.orchestrator import ScanOrchestrator
 from arc_cloud.reporting.json_reporter import JSONReporter
 from arc_cloud.reporting.sarif_reporter import SARIFReporter
 from arc_cloud.reporting.terminal import TerminalReporter
+from arc_cloud.reporting.html_reporter import HTMLReporter
 
 console = Console()
 err_console = Console(stderr=True)
@@ -24,7 +25,7 @@ def report_command(
         "terminal",
         "--format",
         "-f",
-        help="Report format: terminal, json, or sarif.",
+        help="Report format: terminal, json, sarif, or html.",
     ),
     output_file: Optional[str] = typer.Option(
         None,
@@ -68,11 +69,16 @@ def report_command(
         rendered_content = JSONReporter.render(health_report)
     elif fmt == "sarif":
         rendered_content = SARIFReporter.render(health_report)
+    elif fmt == "html":
+        html_reporter = HTMLReporter(health_report)
+        rendered_content = html_reporter.render()
+        if not output_file:
+            output_file = "arc_health_report.html"
     elif fmt == "terminal":
         terminal_reporter = TerminalReporter(console=console)
         terminal_reporter.render(health_report)
     else:
-        err_console.print(f"[bold red]✗ Error:[/bold red] Unknown report format '{format_type}'. Choose from terminal, json, sarif.")
+        err_console.print(f"[bold red]✗ Error:[/bold red] Unknown report format '{format_type}'. Choose from terminal, json, sarif, html.")
         raise typer.Exit(code=2)
 
     if output_file:

@@ -5,19 +5,24 @@
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-> **ARC CLOUD CLI** is an extensible, local-first **Software Engineering Health Platform**. It provides AST-level static analysis, McCabe cyclomatic complexity profiling, automated risk assessment, engineering health scoring (0-100), and CI/CD ready SARIF/JSON reporting.
+> **ARC CLOUD CLI** is an extensible, local-first **Software Engineering Health Platform**. It provides AST-level static analysis, 10 specialized analysis engines, McCabe cyclomatic complexity profiling, automated risk assessment, engineering health scoring (0-100), AI-assisted remediation, baseline trend verification, and CI/CD quality gates with SARIF/JSON/HTML reporting.
 
 ---
 
-## Key Capabilities
+## 10 Specialized Analysis Engines
 
-- **Project Intelligence**: Fast, recursive file indexing respecting `.gitignore`, excluding vendor/build folders (`node_modules`, `.venv`, `.dart_tool`, `build`), and counting total, source, and test lines of code.
-- **AST Parsing Layer**: Python AST visitor calculating exact McCabe cyclomatic complexity across functions and methods.
-- **Rule Engine**: Deterministic rules including `ARC001` (Excessive Function Complexity) with clear remediation guidance.
-- **Centralized Severity & Risk Engine**: Uniform severity weighting (CRITICAL: 10, HIGH: 5, MEDIUM: 2, LOW: 1, INFO: 0) and holistic risk levels (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `NONE`).
-- **Health Scoring Engine**: Transparent 0-100 overall health score and letter grades (A-F), with explicit unanalyzed status for unconfigured dimensions (no fake numbers).
-- **Multi-Format Reporting**: Rich terminal dashboard, standard SARIF v2.1.0 (GitHub Code Scanning compatible), and clean JSON.
-- **CI/CD Failure Gates**: Exit codes (0 = pass, 1 = issues exceed threshold, 2 = config error, 3 = scan error) and `--fail-on` options.
+| Engine | Command | Focus & Capabilities |
+|---|---|---|
+| **Code Quality** | `arc scan` | McCabe cyclomatic complexity (ARC001), size & structure (ARC002, ARC003, ARC006, ARC007, ARC011), duplicate code blocks (ARC004) |
+| **Reliability** | `arc reliability` | Suppressed broad exceptions (`ARC-REL-001`), unclosed file descriptors without context managers (`ARC-REL-002`) |
+| **Security (SAST)** | `arc security` | SQL injection (`ARC-SEC-002`), command injection `shell=True` (`ARC-SEC-003`), unsafe eval/exec (`ARC-SEC-005`), weak crypto MD5/SHA1 (`ARC-SEC-007`), cleartext HTTP (`ARC-SEC-008`) |
+| **Secrets Engine** | `arc secrets` | Safe entropy & pattern scanning for AWS keys, GitHub PATs, private keys, and API credentials (strictly masked in outputs) |
+| **Dependencies** | `arc deps` | Manifest analysis (package.json, requirements.txt, pubspec.yaml), wildcard pinning risks (`ARC-DEP-001`), honest vulnerability telemetry |
+| **Architecture** | `arc architecture` | Modularity extraction, circular dependency detection (`ARC-ARCH-001`), layer boundary violations |
+| **Technical Debt** | `arc debt` | Remediation hour estimation across complexity, security, architecture, testing, and duplication |
+| **Testing** | `arc test` | Test-to-source ratios, test framework detection, critical untested core modules (`ARC-TEST-001`), telemetry coverage inspection |
+| **Performance** | `arc performance` | Algorithmic complexity hotspots ($O(n^3)+$ nested loops `ARC-PERF-001`), regex compilation in tight loops (`ARC-PERF-002`) |
+| **AI Risk** | `arc ai-risk` | Composite observable engineering risk assessment and defect probability |
 
 ---
 
@@ -28,10 +33,10 @@ ARC CLOUD CLI performs project scanning locally.
 Your source code is not uploaded to ARC CLOUD during local scanning.
 ```
 
-- **100% Offline & Local**: Scanning runs entirely on your local machine without sending your code to any cloud server or LLM API.
-- **Zero Code Execution**: Manifests and code files are statically inspected. The scanner never executes project code or runs package managers.
-- **Secret Protection**: Files matching `.env`, `.env.*`, `credentials.json`, `id_rsa`, `*.key`, and secret patterns are never read or indexed.
-- **No AI / LLM Requirement**: Pure deterministic static analysis.
+- **100% Offline & Local-First**: Scanning runs entirely on your local machine without sending your code to any cloud server.
+- **Zero Code Execution**: Manifests and code files are statically inspected. The scanner never executes project code or runs arbitrary package managers.
+- **Secret Protection**: Detected secrets are always securely masked (`api...xyz`) and never printed raw.
+- **No Mandatory AI / LLM Requirement**: Deterministic static analysis by default, with optional local AI enhancements.
 
 ---
 
@@ -63,150 +68,136 @@ pip install -e ".[dev]"
 
 ---
 
-## CLI Commands Overview
+## Complete CLI Command Reference
+
+### Core Platform Commands
 
 | Command | Description |
 |---|---|
-| `arc init` | Generate default `.arccloud.yml` project configuration |
-| `arc scan` | Analyze software project and evaluate engineering health |
-| `arc explain [RULE_ID]` | Show in-depth explanation and remediation guidance for a rule |
-| `arc report` | Generate and export health reports in terminal, json, or sarif format |
-| `arc version` | Display platform architecture and engine availability |
+| `arc scan [PATH]` | Run full 10-engine engineering health scan |
+| `arc report [PATH]` | Export engineering health report (`terminal`, `json`, `sarif`, `html`) |
+| `arc ci [PATH]` | Automated CI/CD quality gate with strict exit codes and SARIF export |
+| `arc init [PATH]` | Initialize `.arccloud.yml` project configuration |
+| `arc version` | Display platform architecture and active engine matrix |
+
+### AI-Assisted Diagnosis & Remediation
+
+| Command | Description |
+|---|---|
+| `arc explain <FINDING_OR_RULE_ID>` | Root-cause analysis, side effects, before/after code, and verification test |
+| `arc fix <FINDING_ID>` | Generate and apply an automated fix patch with automatic `.bak` backup and re-scan |
+| `arc plan [PATH]` | Sprint-ready prioritized engineering remediation plan (P0, P1, P2) |
+| `arc review [PATH]` | Pre-commit AI code review of uncommitted git changes to prevent regressions |
+| `arc verify [PATH]` | Compare current scan against baseline (`.arc/baseline.json`) and track delta |
+
+### Targeted Engine Subcommands
+
+| Command | Description |
+|---|---|
+| `arc reliability [PATH]` | Dedicated reliability, exception handling, and resource leak scan |
+| `arc security [PATH]` | Dedicated SAST security vulnerability scan |
+| `arc secrets [PATH]` | Dedicated secrets, credentials, and token scanner |
+| `arc deps [PATH]` | Dedicated dependency and manifest analysis |
+| `arc architecture [PATH]` | Dedicated circular dependency and layer violation scan |
+| `arc debt [PATH]` | Dedicated technical debt and remediation hour calculation |
+| `arc test [PATH]` | Dedicated testing intelligence and coverage audit |
+| `arc performance [PATH]` | Dedicated algorithmic complexity and performance audit |
+| `arc ai-risk [PATH]` | Dedicated composite risk evaluation |
 
 ---
 
-## Usage Guide
+## Usage Examples
 
-### 1. Initialize Configuration (`arc init`)
-Create an `.arccloud.yml` file in your repository:
-```bash
-arc init
-```
-
-### 2. Run Health Scan (`arc scan`)
-Scan current directory:
+### 1. Run a Full Engineering Health Scan
 ```bash
 arc scan
 ```
-
-Scan another directory with JSON output:
+With legacy Software Blueprint / X-Ray mode:
 ```bash
-arc scan ~/Projects/my_backend --format json
+arc scan --blueprint
 ```
 
-Export SARIF report for GitHub Code Scanning:
+### 2. Generate Local Responsive HTML Report
 ```bash
-arc scan . --format sarif --output results.sarif
+arc scan --format html -o health_report.html
 ```
 
-Fail CI/CD pipeline on High or Critical severity findings:
+### 3. CI/CD Quality Gate
+Integrate directly in GitHub Actions, GitLab CI, or Jenkins:
 ```bash
-arc scan . --fail-on high
+arc ci --fail-on high --min-health 80 --max-debt-hours 20
+```
+Exit Codes:
+- `0`: Quality gate PASSED
+- `1`: Quality gate FAILED (findings exceeded threshold, health below minimum)
+- `2`: Configuration or usage error
+- `3`: Engine or scan runtime error
+
+Automatically emits `arc-results.sarif` compatible with GitHub Code Scanning and updates `$GITHUB_STEP_SUMMARY`.
+
+### 4. AI-Assisted Explanation and Automated Fix
+Explain any finding or rule:
+```bash
+arc explain ARC-SEC-002
+arc explain arc-f-12345
 ```
 
-### 3. Explain Rules (`arc explain`)
-List all registered static analysis rules:
+Generate automated patch, create `.bak` backup, apply fix, and re-scan:
 ```bash
-arc explain
+arc fix arc-f-12345 --dry-run
+arc fix arc-f-12345 -y
 ```
 
-Get detailed explanation, why it matters, anti-patterns, and fixes:
+### 5. Sprint-Ready Remediation Plan
 ```bash
-arc explain ARC001
+arc plan
 ```
+Outputs prioritized work breakdown:
+- **P0 Immediate**: Critical security and hardcoded secrets
+- **P1 Short-Term**: High reliability and architecture violations
+- **P2 Long-Term**: Medium debt, testing, and performance refactoring
 
-### 4. Generate Reports (`arc report`)
+### 6. Baseline Verification & Regression Tracking
+Track health improvements over time:
 ```bash
-arc report --format json --output report.json
-arc report --format sarif --output report.sarif
+arc verify
+arc verify --update-baseline
 ```
-
-### 5. Check Engine Status (`arc version`)
-```bash
-arc version
-```
+Reports new findings (`+N`), resolved findings (`-N`), and overall health score delta (`+X.X IMPROVED`).
 
 ---
 
 ## Configuration (`.arccloud.yml`)
 
-ARC CLOUD can be configured per repository with `.arccloud.yml`:
-
 ```yaml
-# ARC CLOUD Project Configuration
-project:
-  name: my-service
+version: 1
+project_name: "my-service"
 
 scan:
-  exclude:
-    - .git
-    - node_modules
-    - .venv
-    - venv
-    - build
-    - dist
-    - .dart_tool
-    - .gradle
-    - target
-    - __pycache__
   max_files: 20000
   max_depth: 20
+  exclude:
+    - "build/"
+    - "dist/"
+    - "node_modules/"
+    - ".venv/"
 
 rules:
   ARC001:
     enabled: true
-    threshold: 10
+    severity: "high"
+    max_complexity: 10
+  ARC-SEC-002:
+    enabled: true
+    severity: "critical"
 
-output:
-  format: terminal
-```
-
----
-
-## CI/CD Exit Codes
-
-ARC CLOUD uses standard exit codes suitable for automated CI pipelines:
-
-- `0`: Scan succeeded; no issues exceeded failure threshold.
-- `1`: Scan completed; issues found that exceed `--fail-on` severity threshold.
-- `2`: Configuration or invalid argument error.
-- `3`: Runtime error during scan execution.
-
----
-
-## GitHub Actions Integration
-
-```yaml
-name: ARC CLOUD Health Scan
-
-on: [push, pull_request]
-
-jobs:
-  health-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install ARC CLOUD
-        run: pip install arc-cloud
-
-      - name: Run ARC CLOUD Scan
-        run: arc scan . --format sarif --output arc-results.sarif --fail-on high
-
-      - name: Upload SARIF report
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: arc-results.sarif
+reporting:
+  format: "terminal"
+  fail_on: "high"
 ```
 
 ---
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+MIT License. Copyright (c) 2026 ARC CLOUD Innovations.

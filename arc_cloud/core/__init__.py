@@ -2,6 +2,7 @@
 from arc_cloud.core.models import (
     FindingSeverity,
     FindingCategory,
+    EngineStatus,
     Finding,
     ProjectProfile,
     HealthScore,
@@ -14,7 +15,12 @@ from arc_cloud.core.config import (
     SecurityConfig,
     ReportingConfig,
 )
-from arc_cloud.core.orchestrator import ScanOrchestrator
+def __getattr__(name: str):
+    if name == "ScanOrchestrator":
+        from arc_cloud.core.orchestrator import ScanOrchestrator
+        return ScanOrchestrator
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 __all__ = [
     "FindingSeverity",

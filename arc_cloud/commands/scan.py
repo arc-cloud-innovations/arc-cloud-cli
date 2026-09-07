@@ -18,6 +18,7 @@ from arc_cloud.core.orchestrator import ScanOrchestrator
 from arc_cloud.reporting.json_reporter import JSONReporter
 from arc_cloud.reporting.sarif_reporter import SARIFReporter
 from arc_cloud.reporting.terminal import TerminalReporter
+from arc_cloud.reporting.html_reporter import HTMLReporter
 from arc_cloud.scanner.engine import ScannerEngine
 
 console = Console()
@@ -34,7 +35,7 @@ def scan_command(
         "terminal",
         "--format",
         "-f",
-        help="Output report format: 'terminal', 'json', or 'sarif'.",
+        help="Output report format: 'terminal', 'json', 'sarif', or 'html'.",
     ),
     json_output: bool = typer.Option(
         False,
@@ -102,9 +103,11 @@ def scan_command(
             selected_format = "json"
         elif output_file.endswith(".sarif"):
             selected_format = "sarif"
+        elif output_file.endswith(".html") or output_file.endswith(".htm"):
+            selected_format = "html"
 
-    if selected_format not in ("terminal", "json", "sarif"):
-        err_console.print(f"[bold red]✗ Error:[/bold red] Invalid format '{selected_format}'. Valid options: terminal, json, sarif.")
+    if selected_format not in ("terminal", "json", "sarif", "html"):
+        err_console.print(f"[bold red]✗ Error:[/bold red] Invalid format '{selected_format}'. Valid options: terminal, json, sarif, html.")
         raise typer.Exit(code=2)
 
     # Execute Scan Orchestration (Exit code 3 for runtime scan errors)
@@ -127,6 +130,11 @@ def scan_command(
         rendered_text = JSONReporter.render(report)
     elif selected_format == "sarif":
         rendered_text = SARIFReporter.render(report)
+    elif selected_format == "html":
+        html_reporter = HTMLReporter(report)
+        rendered_text = html_reporter.render()
+        if not output_file:
+            output_file = "arc_health_report.html"
 
     # Save output to file if requested
     if output_file:
