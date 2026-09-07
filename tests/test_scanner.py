@@ -189,3 +189,11 @@ def test_cli_scan_output_file():
         assert out_file.exists()
         data = json.loads(out_file.read_text())
         assert data["project"]["name"] == "fastapi_project"
+
+
+def test_cli_scan_blueprint_flag():
+    target = str(FIXTURES_DIR / "react_project")
+    result = runner.invoke(app, ["scan", target, "--blueprint"])
+    assert result.exit_code == 0
+    assert "ARC CLOUD SOFTWARE X-RAY" in result.output
+    assert "react_project" in result.output
