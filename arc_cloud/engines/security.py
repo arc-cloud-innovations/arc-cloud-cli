@@ -178,11 +178,13 @@ class SecurityEngine(BaseEngine):
 
     def _check_regex_security(self, content: str, rel_path: str, findings: List[Finding]) -> None:
         lines = content.splitlines()
+        url_pattern = re.compile(r"""["']http://([a-zA-Z0-9_\-\.]+)(?:/|\b|["'])""")
         for idx, line in enumerate(lines, 1):
             # ARC-SEC-008: Insecure HTTP API URL
-            if "http://" in line and not line.strip().startswith("#") and not line.strip().startswith("//"):
-                if any(k in line.lower() for k in ("api", "endpoint", "service", "url", "host")):
-                    if "localhost" not in line and "127.0.0.1" not in line and "schemas." not in line and "w3.org" not in line:
+            match = url_pattern.search(line)
+            if match and not line.strip().startswith("#") and not line.strip().startswith("//"):
+                host = match.group(1).lower()
+                if host not in ("localhost", "127.0.0.1") and not host.startswith("schemas.") and not host.endswith("w3.org"):
                         findings.append(
                             Finding(
                                 rule_id="ARC-SEC-008",

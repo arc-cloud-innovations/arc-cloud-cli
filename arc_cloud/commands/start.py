@@ -195,8 +195,16 @@ def start_command(
                         console.print(f"Tests: {res.passed} passed, {res.failed} failed. Success: {res.success}")
                     elif char == "v":
                         console.print("\n[cyan]🔍 Running manual verification...[/cyan]")
-                        ver = verifier.verify_state(last_report, prev_findings_dict, session.start_health)
+                        ver = verifier.verify_state(last_report, prev_findings_dict, session.current_health)
+                        if ver.is_verified:
+                            session.verification_status = "VERIFIED"
+                        else:
+                            session.verification_status = "NOT VERIFIED"
                         reporter.render_verification_banner(ver)
+                        reporter.render_live_dashboard(session, last_report, verification_status=session.verification_status)
+                    elif char == "h":
+                        from arc_cloud.reporting.terminal import TerminalReporter
+                        TerminalReporter(console=console).render(last_report)
                     elif char == "s":
                         reporter.render_live_dashboard(session, last_report, verification_status=session.verification_status)
                     elif char == "c":
