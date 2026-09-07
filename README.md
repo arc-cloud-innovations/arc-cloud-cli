@@ -74,6 +74,7 @@ pip install -e ".[dev]"
 
 | Command | Description |
 |---|---|
+| `arc start [PATH]` | **Live Engineering Health Monitor**: Continuous filesystem watcher, automated test runner, regression detector, and cryptographic verification |
 | `arc scan [PATH]` | Run full 10-engine engineering health scan |
 | `arc report [PATH]` | Export engineering health report (`terminal`, `json`, `sarif`, `html`) |
 | `arc ci [PATH]` | Automated CI/CD quality gate with strict exit codes and SARIF export |
@@ -108,7 +109,25 @@ pip install -e ".[dev]"
 
 ## Usage Examples
 
-### 1. Run a Full Engineering Health Scan
+### 1. Live Engineering Health Monitor (`arc start`)
+Run continuous live monitoring while you code (supports human developers, Antigravity, Cursor, Copilot, Claude Code, Windsurf):
+```bash
+arc start
+```
+Options:
+- `arc start --no-tests`: Monitor and rescan without automatically running test suites
+- `arc start --format json`: Stream real-time events in machine-readable JSON (ideal for IDE plugins and CI)
+- `arc start --no-watch`: Execute a single snapshot baseline check and exit
+
+Interactive Live Terminal Controls:
+- `q`: Quit monitor
+- `r`: Trigger immediate complete rescan
+- `v`: Run manual verification check
+- `t`: Run automated tests
+- `s`: Show live monitor dashboard
+- `c`: Clear terminal screen
+
+### 2. Run a Full Engineering Health Scan
 ```bash
 arc scan
 ```

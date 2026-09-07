@@ -29,6 +29,7 @@ from arc_cloud.commands.explain import explain_command
 from arc_cloud.commands.init import init_command
 from arc_cloud.commands.report import report_command
 from arc_cloud.commands.scan import scan_command
+from arc_cloud.commands.start import start_command
 from arc_cloud.commands.version import version_command
 
 console = Console()
@@ -41,6 +42,7 @@ app = typer.Typer(
 )
 
 # Core Platform Commands
+app.command(name="start", help="Live engineering health monitoring mode (continuous watcher, tests, regressions).")(start_command)
 app.command(name="scan", help="Analyze a software project and evaluate engineering health.")(scan_command)
 app.command(name="report", help="Generate and export engineering health reports (terminal, json, sarif, html).")(report_command)
 app.command(name="ci", help="Automated CI/CD quality gate with strict exit codes and SARIF output.")(ci_command)

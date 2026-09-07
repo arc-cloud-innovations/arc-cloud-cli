@@ -1,12 +1,184 @@
 """ARC CLOUD Baseline Tracking and Verification Engine."""
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import uuid
 
-from arc_cloud.core.models import HealthReport
+from arc_cloud.core.models import FindingSeverity, HealthReport
 from arc_cloud.core.orchestrator import ScanOrchestrator
+from arc_cloud.monitoring.event_bus import EventBus, EventType
+from arc_cloud.verification.health_delta import HealthDelta, HealthDeltaCalculator
+from arc_cloud.verification.regression import RegressionDetector, RegressionReport
+
+
+@dataclass
+class VerificationResult:
+    verification_id: str = field(default_factory=lambda: f"ver-{uuid.uuid4().hex[:8]}")
+    status: str = "NOT_VERIFIED"  # VERIFIED | NOT_VERIFIED
+    health_before: float = 100.0
+    health_after: float = 100.0
+    health_delta: float = 0.0
+    new_findings_count: int = 0
+    resolved_findings_count: int = 0
+    regressions_count: int = 0
+    tests_status: str = "PASS"
+    security_status: str = "PASS"
+    architecture_status: str = "PASS"
+    timestamp: datetime = field(default_factory=datetime.now)
+    verified_files: List[str] = field(default_factory=list)
+    verified_hashes: Dict[str, str] = field(default_factory=dict)
+    reasons: List[str] = field(default_factory=list)
+
+    @property
+    def is_verified(self) -> bool:
+        return self.status == "VERIFIED"
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = asdict(self)
+        d["timestamp"] = self.timestamp.isoformat()
+        return d
+
+
+class VerificationEngine:
+    """Manages the verification state, validity, and invalidation lifecycle."""
+
+    def __init__(self, root_dir: Path, event_bus: Optional[EventBus] = None) -> None:
+        self.root_dir = root_dir.resolve()
+        self.event_bus = event_bus or EventBus()
+        self.last_verification: Optional[VerificationResult] = None
+
+    def verify_state(
+        self,
+        current_report: HealthReport,
+        previous_findings: List[Dict[str, Any]],
+        previous_score: float,
+        test_passed: bool = True,
+        test_errors: Optional[List[str]] = None,
+    ) -> VerificationResult:
+        self.event_bus.emit(EventType.VERIFICATION_STARTED, message="Running verification checks...")
+
+        # 1. Regression check
+        regression = RegressionDetector.check_regression(
+            current_report=current_report,
+            previous_findings=previous_findings,
+            previous_score=previous_score,
+        )
+
+        # 2. Health Delta
+        delta = HealthDeltaCalculator.calculate(
+            before_score=previous_score,
+            problems_before=len(previous_findings),
+            current_report=current_report,
+            has_regressions=regression.has_regression,
+            test_passed=test_passed,
+        )
+
+        # 3. Security check
+        crit_sec = [
+            f for f in current_report.findings
+            if f.severity in (FindingSeverity.CRITICAL, FindingSeverity.HIGH) and "SEC" in f.rule_id
+        ]
+        has_critical_security = len(crit_sec) > 0
+
+        # Determine pass / fail
+        passed = (
+            test_passed
+            and not regression.has_regression
+            and not has_critical_security
+            and current_report.health_score.overall_score >= 50.0
+        )
+
+        reasons = list(regression.reasons)
+        if not test_passed:
+            reasons.append("Automated test suite failed or had errors.")
+            if test_errors:
+                reasons.extend(test_errors[:2])
+        if has_critical_security:
+            reasons.append(f"{len(crit_sec)} critical/high security vulnerability(ies) active.")
+
+        status = "VERIFIED" if passed else "NOT_VERIFIED"
+
+        # Compute file hashes for verification validity
+        hashes = self._collect_hashes()
+
+        result = VerificationResult(
+            status=status,
+            health_before=previous_score,
+            health_after=current_report.health_score.overall_score,
+            health_delta=delta.score_delta,
+            new_findings_count=len(regression.new_findings),
+            resolved_findings_count=len(regression.fixed_findings),
+            regressions_count=regression.new_critical_count + regression.new_high_count,
+            tests_status="PASS" if test_passed else "FAIL",
+            security_status=delta.security_status,
+            architecture_status=delta.architecture_status,
+            verified_files=list(hashes.keys()),
+            verified_hashes=hashes,
+            reasons=reasons,
+        )
+
+        self.last_verification = result
+
+        if passed:
+            self.event_bus.emit(
+                EventType.VERIFICATION_PASSED,
+                message=f"Change Verified! Health: {previous_score} -> {result.health_after}",
+                data=result.to_dict(),
+            )
+        else:
+            self.event_bus.emit(
+                EventType.VERIFICATION_FAILED,
+                message=f"Verification Failed! Status: NOT VERIFIED. Reasons: {', '.join(reasons)}",
+                data=result.to_dict(),
+            )
+
+        return result
+
+    def check_validity(self) -> bool:
+        """Returns False and invalidates if files changed since last verification."""
+        if not self.last_verification or self.last_verification.status != "VERIFIED":
+            return False
+
+        current_hashes = self._collect_hashes()
+        if current_hashes != self.last_verification.verified_hashes:
+            self.invalidate("Project files changed after verification.")
+            return False
+        return True
+
+    def invalidate(self, reason: str = "Files modified after verification.") -> None:
+        if self.last_verification and self.last_verification.status == "VERIFIED":
+            self.last_verification.status = "NOT_VERIFIED"
+            self.event_bus.emit(
+                EventType.VERIFICATION_INVALIDATED,
+                message=f"Verification Invalidated: {reason}",
+                data={"reason": reason},
+            )
+
+    def _collect_hashes(self) -> Dict[str, str]:
+        hashes: Dict[str, str] = {}
+        for root, dirs, files in os.walk(self.root_dir):
+            dirs[:] = [d for d in dirs if d not in {".git", ".venv", "venv", "node_modules", "build", "dist", ".arccloud", ".arc"}]
+            root_path = Path(root)
+            for f in files:
+                if f.endswith((".tmp", ".swp", ".bak", ".log", ".DS_Store")):
+                    continue
+                fpath = root_path / f
+                try:
+                    rel = str(fpath.relative_to(self.root_dir))
+                    h = hashlib.sha256()
+                    with fpath.open("rb") as fp:
+                        while chunk := fp.read(65536):
+                            h.update(chunk)
+                    hashes[rel] = h.hexdigest()
+                except Exception:
+                    continue
+        return hashes
 
 
 class BaselineVerifier:

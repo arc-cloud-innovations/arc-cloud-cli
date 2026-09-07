@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-09-07
+
+Added `arc start` Live Engineering Health Monitor:
+- **Live Filesystem Watcher**: Zero-dependency debounced filesystem watcher with change batching, ignoring vendor/build caches and respecting `.gitignore`.
+- **Targeted Change Analysis**: Real-time diff generation and blast-radius impact analysis mapping changed files to affected modules and tests.
+- **Automated Test Runner**: Multi-framework detection (Flutter, Pytest, NPM, Gradle, Cargo, Go) with targeted test execution upon code change.
+- **Cryptographic Verification Validity & Invalidation**: Tracks verified file hashes; immediately invalidates stale verification whenever project files change.
+- **Regression Detection & Health Delta**: Detects newly introduced security/complexity findings and tracks score transitions (`+5`, `-10`).
+- **Interactive Live Terminal Dashboard**: Real-time status cards, live event stream, and hotkey controls (`q`, `r`, `v`, `t`, `s`, `h`, `c`).
+- **Machine-Readable JSON Streaming**: `--format json` for seamless integration into IDEs, AI agents, and CI pipelines.
+
 ## [0.2.0] - 2026-09-07
 
 Major upgrade from code scanner to comprehensive Software Engineering Health Platform.
