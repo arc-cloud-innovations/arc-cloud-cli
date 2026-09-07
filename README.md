@@ -1,11 +1,23 @@
-# ARC CLOUD CLI
+# ARC CLOUD — Software Engineering Health Platform CLI
 
 [![CI Tests](https://github.com/arc-cloud-innovations/arc-cloud-cli/actions/workflows/tests.yml/badge.svg)](https://github.com/arc-cloud-innovations/arc-cloud-cli/actions/workflows/tests.yml)
 [![PyPI version](https://img.shields.io/pypi/v/arc-cloud.svg)](https://pypi.org/project/arc-cloud/)
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-> **ARC CLOUD CLI** is a local Software X-Ray tool that analyzes a software project and generates a structured Software Blueprint containing detected languages, frameworks, platforms, dependencies, configuration and project structure.
+> **ARC CLOUD CLI** is an extensible, local-first **Software Engineering Health Platform**. It provides AST-level static analysis, McCabe cyclomatic complexity profiling, automated risk assessment, engineering health scoring (0-100), and CI/CD ready SARIF/JSON reporting.
+
+---
+
+## Key Capabilities
+
+- **Project Intelligence**: Fast, recursive file indexing respecting `.gitignore`, excluding vendor/build folders (`node_modules`, `.venv`, `.dart_tool`, `build`), and counting total, source, and test lines of code.
+- **AST Parsing Layer**: Python AST visitor calculating exact McCabe cyclomatic complexity across functions and methods.
+- **Rule Engine**: Deterministic rules including `ARC001` (Excessive Function Complexity) with clear remediation guidance.
+- **Centralized Severity & Risk Engine**: Uniform severity weighting (CRITICAL: 10, HIGH: 5, MEDIUM: 2, LOW: 1, INFO: 0) and holistic risk levels (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `NONE`).
+- **Health Scoring Engine**: Transparent 0-100 overall health score and letter grades (A-F), with explicit unanalyzed status for unconfigured dimensions (no fake numbers).
+- **Multi-Format Reporting**: Rich terminal dashboard, standard SARIF v2.1.0 (GitHub Code Scanning compatible), and clean JSON.
+- **CI/CD Failure Gates**: Exit codes (0 = pass, 1 = issues exceed threshold, 2 = config error, 3 = scan error) and `--fail-on` options.
 
 ---
 
@@ -17,9 +29,9 @@ Your source code is not uploaded to ARC CLOUD during local scanning.
 ```
 
 - **100% Offline & Local**: Scanning runs entirely on your local machine without sending your code to any cloud server or LLM API.
-- **Zero Code Execution**: Manifests and code files are statically inspected. The scanner never executes project code or runs package managers (`npm install`, `pip install`, `flutter pub get`, `gradle`, `cargo`, etc.).
-- **Secret Protection**: Files matching `.env`, `.env.*`, `credentials.json`, `id_rsa`, `*.key`, and secret patterns are never read, printed, or exported.
-- **No AI / LLM Requirement**: Deterministic, rule-based static analysis engine.
+- **Zero Code Execution**: Manifests and code files are statically inspected. The scanner never executes project code or runs package managers.
+- **Secret Protection**: Files matching `.env`, `.env.*`, `credentials.json`, `id_rsa`, `*.key`, and secret patterns are never read or indexed.
+- **No AI / LLM Requirement**: Pure deterministic static analysis.
 
 ---
 
@@ -29,6 +41,10 @@ Your source code is not uploaded to ARC CLOUD during local scanning.
 Install once globally and run from any project directory:
 ```bash
 pipx install arc-cloud
+```
+Or directly from GitHub:
+```bash
+pipx install git+https://github.com/arc-cloud-innovations/arc-cloud-cli.git
 ```
 
 ### Standard `pip`
@@ -47,222 +63,150 @@ pip install -e ".[dev]"
 
 ---
 
-## Usage
+## CLI Commands Overview
 
-### 1. Scan Current Project Directory
-Navigate to any project on your computer and run:
+| Command | Description |
+|---|---|
+| `arc init` | Generate default `.arccloud.yml` project configuration |
+| `arc scan` | Analyze software project and evaluate engineering health |
+| `arc explain [RULE_ID]` | Show in-depth explanation and remediation guidance for a rule |
+| `arc report` | Generate and export health reports in terminal, json, or sarif format |
+| `arc version` | Display platform architecture and engine availability |
+
+---
+
+## Usage Guide
+
+### 1. Initialize Configuration (`arc init`)
+Create an `.arccloud.yml` file in your repository:
 ```bash
-cd my-project
+arc init
+```
+
+### 2. Run Health Scan (`arc scan`)
+Scan current directory:
+```bash
 arc scan
 ```
 
-### 2. Scan a Specific Project Path
+Scan another directory with JSON output:
 ```bash
-arc scan ./my-project
-arc scan /absolute/path/to/project
+arc scan ~/Projects/my_backend --format json
 ```
 
-### 3. Output as Raw JSON
-Stream the normalized Software Blueprint JSON directly to stdout for scripting or piping into `jq`:
+Export SARIF report for GitHub Code Scanning:
 ```bash
-arc scan --json
-arc scan ./my-project --json | jq .project
+arc scan . --format sarif --output results.sarif
 ```
 
-### 4. Export Blueprint to File
+Fail CI/CD pipeline on High or Critical severity findings:
 ```bash
-arc scan --output blueprint.json
+arc scan . --fail-on high
 ```
 
-### 5. Check CLI Version & Help
+### 3. Explain Rules (`arc explain`)
+List all registered static analysis rules:
 ```bash
-arc --version
-arc --help
+arc explain
+```
+
+Get detailed explanation, why it matters, anti-patterns, and fixes:
+```bash
+arc explain ARC001
+```
+
+### 4. Generate Reports (`arc report`)
+```bash
+arc report --format json --output report.json
+arc report --format sarif --output report.sarif
+```
+
+### 5. Check Engine Status (`arc version`)
+```bash
+arc version
 ```
 
 ---
 
-## Supported Technologies
+## Configuration (`.arccloud.yml`)
 
-### Programming Languages
-- **Dart** (`.dart`)
-- **Python** (`.py`, `.pyi`, `.pyw`)
-- **JavaScript** (`.js`, `.mjs`, `.cjs`, `.jsx`)
-- **TypeScript** (`.ts`, `.mts`, `.cts`, `.tsx`)
-- **Java** (`.java`)
-- **Kotlin** (`.kt`, `.kts`)
-- **Swift** (`.swift`)
-- **C#** (`.cs`, `.csx`)
-- **C++ / C** (`.cpp`, `.cc`, `.cxx`, `.hpp`, `.h`, `.c`)
-- **Go** (`.go`)
-- **Rust** (`.rs`)
-- **PHP** (`.php`)
-- **Ruby** (`.rb`)
+ARC CLOUD can be configured per repository with `.arccloud.yml`:
 
-### Frameworks & Ecosystems
-- **Flutter**: `pubspec.yaml`, Flutter SDK dependencies, Dart files, Android/iOS directories.
-- **React**: `package.json`, `react` dependencies, JSX/TSX components.
-- **Next.js**: `package.json`, `next` dependencies, `next.config.*`, App/Pages router.
-- **Node.js**: `package.json`, JavaScript/TypeScript server signals.
-- **FastAPI**: `requirements.txt`, `pyproject.toml`, `fastapi` dependencies.
-- **Django**: `requirements.txt`, `manage.py`, `django` dependencies.
-- **Spring Boot**: `pom.xml`, `build.gradle`, Spring starter dependencies.
-- **.NET**: `*.csproj`, `*.sln`, SDK indicators.
+```yaml
+# ARC CLOUD Project Configuration
+project:
+  name: my-service
 
-### Platforms Detected
-- **Android**, **iOS**, **Web**, **Windows**, **macOS**, **Linux**
+scan:
+  exclude:
+    - .git
+    - node_modules
+    - .venv
+    - venv
+    - build
+    - dist
+    - .dart_tool
+    - .gradle
+    - target
+    - __pycache__
+  max_files: 20000
+  max_depth: 20
 
-### Project Classifications
-- **Mobile Application**, **Web Application**, **Backend**, **Full Stack**, **Desktop Application**, **Library**, **CLI Application**, **Unknown**
+rules:
+  ARC001:
+    enabled: true
+    threshold: 10
 
----
-
-## CLI Commands Reference
-
-| Command | Description |
-| :--- | :--- |
-| `arc scan [PATH]` | Perform static project analysis and generate Software Blueprint (defaults to current directory) |
-| `arc --version` | Display the installed CLI version |
-| `arc --help` | Display general help and command options |
-
-Options for `arc scan`:
-- `--json`, `-j`: Output the normalized Software Blueprint as raw JSON to stdout.
-- `--output`, `-o <FILE>`: Save the normalized Software Blueprint JSON to a specified file.
-- `--max-files <INT>`: Maximum number of files to inspect (default: 20,000).
-- `--max-depth <INT>`: Maximum directory recursion depth (default: 20).
-
----
-
-## Software Blueprint JSON Specification
-
-The Software Blueprint uses schema version `1.0`:
-
-```json
-{
-  "schema_version": "1.0",
-  "scanner": {
-    "name": "ARC CLOUD CLI",
-    "version": "0.1.0",
-    "timestamp": "2026-09-04T12:00:00Z",
-    "duration_seconds": 0.04,
-    "files_scanned": 128
-  },
-  "project": {
-    "name": "my_project",
-    "type": "Mobile Application",
-    "root_path": "/path/to/my_project",
-    "description": null
-  },
-  "languages": [
-    {
-      "name": "Dart",
-      "files": 45,
-      "percentage": 88.2
-    }
-  ],
-  "frameworks": [
-    {
-      "name": "Flutter",
-      "version": "3.19.0",
-      "category": "Mobile",
-      "confidence": 1.0
-    }
-  ],
-  "platforms": [
-    {
-      "name": "Android",
-      "source": "android/ directory"
-    },
-    {
-      "name": "iOS",
-      "source": "ios/ directory"
-    }
-  ],
-  "dependencies": [
-    {
-      "name": "cupertino_icons",
-      "version": "^1.0.6",
-      "source": "pubspec.yaml",
-      "type": "runtime"
-    }
-  ],
-  "configuration_files": [
-    {
-      "path": "pubspec.yaml",
-      "name": "pubspec.yaml",
-      "type": "package"
-    }
-  ],
-  "structure": {
-    "areas": [
-      {
-        "name": "source",
-        "paths": ["lib"]
-      },
-      {
-        "name": "tests",
-        "paths": ["test"]
-      }
-    ],
-    "total_files": 128,
-    "total_directories": 14,
-    "ignored_directories": [".git", ".dart_tool"]
-  },
-  "architecture": {
-    "patterns": ["Layered / Modular Architecture"],
-    "details": {
-      "test_suite_detected": true
-    }
-  },
-  "warnings": []
-}
+output:
+  format: terminal
 ```
 
 ---
 
-## Development & Testing
+## CI/CD Exit Codes
 
-Run all tests:
-```bash
-pytest -v
-```
+ARC CLOUD uses standard exit codes suitable for automated CI pipelines:
 
-Run test coverage:
-```bash
-pytest --cov=arc_cloud --cov-report=term-missing
-```
-
-Build the distribution packages:
-```bash
-python -m pip install --upgrade build twine
-python -m build
-python -m twine check dist/*
-```
+- `0`: Scan succeeded; no issues exceeded failure threshold.
+- `1`: Scan completed; issues found that exceed `--fail-on` severity threshold.
+- `2`: Configuration or invalid argument error.
+- `3`: Runtime error during scan execution.
 
 ---
 
-## Release Process
+## GitHub Actions Integration
 
-### 1. TestPyPI Publishing
-```bash
-twine upload -r testpypi dist/*
-```
-Verify the TestPyPI package:
-```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ arc-cloud
-arc --version
-```
+```yaml
+name: ARC CLOUD Health Scan
 
-### 2. Production PyPI Publishing
-When authorized by the project owner:
-```bash
-git tag v0.1.0
-git push origin v0.1.0
+on: [push, pull_request]
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ARC CLOUD
+        run: pip install arc-cloud
+
+      - name: Run ARC CLOUD Scan
+        run: arc scan . --format sarif --output arc-results.sarif --fail-on high
+
+      - name: Upload SARIF report
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: arc-results.sarif
 ```
-GitHub Actions will run tests, build distribution wheels, and publish to production PyPI via PyPI Trusted Publishing.
 
 ---
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

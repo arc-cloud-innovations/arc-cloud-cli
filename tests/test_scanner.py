@@ -164,10 +164,11 @@ def test_cli_help():
 
 
 def test_cli_version():
+    from arc_cloud import __version__
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert "arc" in result.output
-    assert "0.1.0" in result.output
+    assert __version__ in result.output
 
 
 def test_cli_scan_json():
